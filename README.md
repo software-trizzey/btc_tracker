@@ -2,10 +2,8 @@
 
 <img src="tracker_demo.png" alt="Program demo image" width="620px"/>
 
-
 A Rust project to track Bitcoin prices and store them in an SQLite database.
 Currency data is fetched from [CoinMarketCap](https://coinmarketcap.com/).
-
 
 ## Getting Started
 
@@ -41,12 +39,32 @@ Currency data is fetched from [CoinMarketCap](https://coinmarketcap.com/).
    cargo build --release
    ```
 5. You can run the production version:
-    
-    ```sh
-    ./target/debug/btc_tracker
-    ```
 
-    Note: once built you can move this binary where ever you want. Which means you can run it from a more convienient place.
+   ```sh
+   ./target/release/btc_tracker
+   ```
+6. Once you've built the binary, you can run move it to a more convenient place and run from there.
+
+   Example: Running the program from the desktop
+
+   ```sh
+   # starts from the btc_tracker root
+   cd target/release
+   cp btc_tracker ~/Desktop
+   chmod +x ~/Desktop/btc_tracker
+   cd ~/Desktop
+   ./btc_tracker
+   ```
+
+   Note: once you move the binary, you'll need a solution for setting the .env variables.
+
+   Example (not recommended for prod/serious apps):
+
+   ```sh
+   export API_URL="http://example.com"
+   export API_KEY="wow-such-secret-key-1213!"
+   ./btc_tracker
+   ```
 
 ### Inspecting the Database
 

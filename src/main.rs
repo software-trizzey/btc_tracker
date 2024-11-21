@@ -108,6 +108,10 @@ async fn fetch_and_store_latest_quote() -> Result<()> {
     let api_key = env::var("API_KEY")?;
     let api_url = env::var("API_URL")?;
 
+    if api_key.is_empty() || api_url.is_empty() {
+        panic!("API_KEY or API_URL is not set");
+    }
+
     let client = Client::new();
     let mut headers = HeaderMap::new();
     headers.insert("X-CMC_PRO_API_KEY", HeaderValue::from_str(&api_key)?);
