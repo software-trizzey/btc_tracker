@@ -20,6 +20,8 @@ A Rust project to track Bitcoin prices and store them in an SQLite database.
     ```
 
 2. Create a `.env` file in the root of the project with the following content:
+    **Note:** You'll need to sign up for a free account at [CoinMarketCap](https://coinmarketcap.com/) to get an API key.
+
 
     ```env
     API_KEY=your_api_key_here
