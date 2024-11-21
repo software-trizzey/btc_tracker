@@ -9,6 +9,7 @@ use serde::Deserialize;
 use tokio;
 use dotenv::dotenv;
 use std::env;
+use colored::*;
 
 
 error_chain! {
@@ -58,14 +59,13 @@ async fn main() -> Result<()> {
     
     let api_response: ApiResponse = serde_json::from_str(&body)?;
     let data = api_response.data;
-    println!("Found BTC data {:?}", data.bitcoin);
+    println!("Found BTC quote {:?}", data.bitcoin);
 
     let conn = Connection::open("btc_tracker.db")?;
     database::create_database(&conn)?;
     let currency_id = database::insert_currency(&conn, &data.bitcoin)?;
-    println!("Inserted currency with ID: {}", currency_id);
     database::insert_quote(&conn, currency_id, &data.bitcoin.quote.usd)?;
-    println!("Inserted quote for currency with ID: {}", currency_id);
+    println!("\n{}", "SUCCESS -- A new BTC quote has been saved to the database".green().bold());
 
     Ok(())
 }
