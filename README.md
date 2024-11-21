@@ -1,5 +1,8 @@
 # BTC Tracker
 
+<img src="tracker_demo.png" alt="Program demo image" width="420px"/>
+
+
 A Rust project to track Bitcoin prices and store them in an SQLite database.
 Currency data is fetched from [CoinMarketCap](https://coinmarketcap.com/).
 
@@ -72,14 +75,6 @@ Once the project is run, the SQLite database will be created and populated with 
 #### Using a Graphical Tool
 
 You can use graphical tools like DB Browser for SQLite to open and inspect the database file. These tools provide a user-friendly interface to view and manipulate the database contents.
-
-### Example Output
-
-```sh
-Inserted currency with ID: 1
-Inserted quote for currency with ID: 1
-```
-
 
 ## References
 
