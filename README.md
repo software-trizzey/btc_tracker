@@ -51,13 +51,13 @@ Once the project is run, the SQLite database will be created and populated with 
 3. Once in the SQLite shell, you can run SQL commands to inspect the database. For example:
 
    ```sql
-   -- Get list of quotes with newest at the top
+   -- Get the 25 most recent quotes
    select q.id as 'quote_id', q.price, q.percent_change_24h, q.created_at, c.name, c.symbol
    from quote as q
    inner join currency as c
    on q.currency_id = c.id
    order by
-   date(q.created_at) DESC Limit 1;
+   date(q.created_at) DESC Limit 25;
    ```
 
 #### Using a Graphical Tool
