@@ -1,6 +1,6 @@
 # BTC Tracker
 
-<img src="tracker_demo.png" alt="Program demo image" width="420px"/>
+<img src="tracker_demo.png" alt="Program demo image" width="620px"/>
 
 
 A Rust project to track Bitcoin prices and store them in an SQLite database.
