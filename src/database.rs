@@ -69,9 +69,11 @@ pub fn insert_currency(connection: &Connection, currency: &Cryptocurrency) -> Re
 }
 
 pub fn insert_quote(connection: &Connection, currency_id: u64, quote: &Quote) -> Result<()> {
+    let formatted_price = (quote.price * 100.0).round() / 100.0;
+
     connection.execute(
         "INSERT INTO quote (currency_id, last_updated, price, percent_change_24h) VALUES (?1, ?2, ?3, ?4)",
-        params![currency_id, &quote.last_updated, &quote.price, &quote.percent_change_24h],
+        params![currency_id, &quote.last_updated, formatted_price, &quote.percent_change_24h],
     )?;
 
     Ok(())
