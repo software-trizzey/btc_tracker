@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct Quote {
-    pub price: f64,
+    price: f64,
     percent_change_24h: f64,
     last_updated: String,
 }
