@@ -37,6 +37,13 @@ Currency data is fetched from [CoinMarketCap](https://coinmarketcap.com/).
    ```sh
    cargo build --release
    ```
+5. You can run the production version:
+    
+    ```sh
+    ./target/debug/btc_tracker
+    ```
+
+    Note: once built you can move this binary where ever you want. Which means you can run it from a more convienient place.
 
 ### Inspecting the Database
 

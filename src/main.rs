@@ -47,7 +47,7 @@ const THIRTY_MINUTES: Duration = Duration::from_secs(30 * 60);
 async fn main() -> Result<()> {
     dotenv().ok();
 
-    println!("{}", "Starting BTC tracker...".bold());
+    println!("\n{}", "Starting BTC tracker (v1.0.0)...".bold());
 
     let (tx, mut rx) = watch::channel(());
     let is_running = Arc::new(AtomicBool::new(true));
@@ -80,7 +80,7 @@ async fn main() -> Result<()> {
         }
     });
 
-    println!("{}", "Press Ctrl+C to stop the task...".yellow());
+    println!("{}", "Stop program using: Ctrl+C".yellow());
     signal::ctrl_c().await.unwrap();
     println!("\n{}", "Ctrl+C pressed, stopping task immediately...".yellow());
 
