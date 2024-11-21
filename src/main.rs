@@ -58,7 +58,7 @@ async fn main() -> Result<()> {
     
     let api_response: ApiResponse = serde_json::from_str(&body)?;
     let data = api_response.data;
-    println!("{:?}", data.bitcoin);
+    println!("Found BTC data {:?}", data.bitcoin);
 
     let conn = Connection::open("btc_tracker.db")?;
     database::create_database(&conn)?;
