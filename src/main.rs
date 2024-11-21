@@ -1,7 +1,10 @@
+mod database;
+
 use error_chain::error_chain;
 
 use reqwest::header::{HeaderMap, HeaderValue, InvalidHeaderValue};
 use reqwest::Client;
+use rusqlite::Connection;
 use serde::Deserialize;
 use tokio;
 use dotenv::dotenv;
@@ -15,32 +18,16 @@ error_chain! {
         InvalidHeaderValue(InvalidHeaderValue);
         JsonError(serde_json::Error);
         VarError(env::VarError);
+        DatabaseError(rusqlite::Error);
     }
 }
 
-#[derive(Deserialize, Debug)]
-struct Quote {
-    price: f64,
-}
 
-#[derive(Deserialize, Debug)]
-struct Quotes {
-    #[serde(rename = "USD")]
-    usd: Quote
-}
-
-#[derive(Deserialize, Debug)]
-struct Cryptocurrency {
-    id: u64,
-    name: String,
-    symbol: String,
-    quote: Quotes,
-}
 
 #[derive(Deserialize, Debug)]
 struct Data {
     #[serde(rename = "1")]
-    bitcoin: Cryptocurrency,
+    bitcoin: database::Cryptocurrency,
 }
 
 #[derive(Deserialize, Debug)]
@@ -71,8 +58,14 @@ async fn main() -> Result<()> {
     
     let api_response: ApiResponse = serde_json::from_str(&body)?;
     let data = api_response.data;
-    // TODO: parse the response and store the data in a struct
-    println!("{:?}", data);
+    println!("{:?}", data.bitcoin);
+
+    let conn = Connection::open("btc_tracker.db")?;
+    database::create_database(&conn)?;
+    let currency_id = database::insert_currency(&conn, &data.bitcoin)?;
+    println!("Inserted currency with ID: {}", currency_id);
+    database::insert_quote(&conn, currency_id, &data.bitcoin.quote.usd)?;
+    println!("Inserted quote for currency with ID: {}", currency_id);
 
     Ok(())
 }

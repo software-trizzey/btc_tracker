@@ -1,3 +1,4 @@
 /target
 
 .env
+btc_tracker.db
