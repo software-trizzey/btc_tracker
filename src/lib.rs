@@ -42,52 +42,6 @@ struct ApiResponse {
 }
 
 
-#[tokio::main]
-pub async fn run(interval_duration: Duration) {
-    let (tx, mut rx) = watch::channel(());
-    let is_running = Arc::new(AtomicBool::new(true));
-    let is_task_running = is_running.clone();
-
-    let handle_task = tokio::spawn(async move {
-        let mut interval = interval(interval_duration);
-
-        let mut task_count = 1;
-        loop {
-            tokio::select! {
-                _ = interval.tick() => {
-                    if !is_task_running.load(Ordering::Relaxed) {
-                        break;
-                    }
-                    println!("\n{}", format!("Task #{} is running...", task_count).bold());
-                    if let Err(e) = fetch_and_store_latest_quote().await {
-                        eprintln!("Error fetching and storing quote: {}", e);
-                        break;
-                    }
-                    println!("\n{}", format!("Task #{} completed successfully.", task_count).green().bold());
-                    task_count += 1;
-
-                    println!("\nWaiting for next task...");
-                }
-                _ = rx.changed() => {
-                    break;
-                }
-            }
-        }
-    });
-
-    println!("{}", "Stop program using: Ctrl+C".yellow());
-    signal::ctrl_c().await.unwrap();
-    println!("\n{}", "Ctrl+C pressed, stopping task immediately...".yellow());
-
-    // Set the flag to stop the task
-    is_running.store(false, Ordering::Relaxed);
-    let _ = tx.send(());
-
-    handle_task.await.unwrap();
-    println!("\n{}", "Task fully stopped... Exiting program... Bye! 👋".green().bold());
-}
-
-
 async fn fetch_and_store_latest_quote() -> Result<()> {
     println!("Fetching latest quote...");
 
@@ -105,7 +59,10 @@ async fn fetch_and_store_latest_quote() -> Result<()> {
             let parsed_minimum_price: f64 = match min_price.parse::<f64>() {
                 Ok(parsed_price) => parsed_price,
                 Err(_) => {
-                    eprintln!("Error parsing MINIMUM_BUY_PRICE of \"{}\"! Is it a valid number?", min_price);
+                    eprintln!(
+                        "Error parsing MINIMUM_BUY_PRICE of \"{}\"! Is it a valid number?",
+                        min_price
+                    );
                     println!("Skipping notification.");
                     return Ok(());
                 }
@@ -177,4 +134,50 @@ async fn send_discord_message(price: &f64, price_threshold: &str) -> Result<()> 
     }
 
     Ok(())
+}
+
+
+#[tokio::main]
+pub async fn run(interval_duration: Duration) {
+    let (tx, mut rx) = watch::channel(());
+    let is_running = Arc::new(AtomicBool::new(true));
+    let is_task_running = is_running.clone();
+
+    let handle_task = tokio::spawn(async move {
+        let mut interval = interval(interval_duration);
+
+        let mut task_count = 1;
+        loop {
+            tokio::select! {
+                _ = interval.tick() => {
+                    if !is_task_running.load(Ordering::Relaxed) {
+                        break;
+                    }
+                    println!("\n{}", format!("Task #{} is running...", task_count).bold());
+                    if let Err(e) = fetch_and_store_latest_quote().await {
+                        eprintln!("Error fetching and storing quote: {}", e);
+                        break;
+                    }
+                    println!("\n{}", format!("Task #{} completed successfully.", task_count).green().bold());
+                    task_count += 1;
+
+                    println!("\nWaiting for next task...");
+                }
+                _ = rx.changed() => {
+                    break;
+                }
+            }
+        }
+    });
+
+    println!("{}", "Stop program using: Ctrl+C".yellow());
+    signal::ctrl_c().await.unwrap();
+    println!("\n{}", "Ctrl+C pressed, stopping task immediately...".yellow());
+
+    // Set the flag to stop the task
+    is_running.store(false, Ordering::Relaxed);
+    let _ = tx.send(());
+
+    handle_task.await.unwrap();
+    println!("\n{}", "Task fully stopped... Exiting program... Bye! 👋".green().bold());
 }
