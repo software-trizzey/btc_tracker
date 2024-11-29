@@ -91,6 +91,40 @@ pub async fn run(interval_duration: Duration) {
 async fn fetch_and_store_latest_quote() -> Result<()> {
     println!("Fetching latest quote...");
 
+    let data = get_bitcoin_quote().await?;
+
+    let conn = Connection::open("btc_tracker.db")?;
+    database::create_database(&conn)?;
+    let currency_id = database::insert_currency(&conn, &data.bitcoin)?;
+    database::insert_quote(&conn, currency_id, &data.bitcoin.quote.usd)?;
+
+    println!("{}", "Success! A new BTC quote has been saved to the database");
+
+    match env::var("MINIMUM_BUY_PRICE") {
+        Ok(min_price) => {
+            let parsed_minimum_price: f64 = match min_price.parse::<f64>() {
+                Ok(parsed_price) => parsed_price,
+                Err(_) => {
+                    eprintln!("Error parsing MINIMUM_BUY_PRICE of \"{}\"! Is it a valid number?", min_price);
+                    println!("Skipping notification.");
+                    return Ok(());
+                }
+            };
+
+            let price = data.bitcoin.quote.usd.price;
+
+            if price <= parsed_minimum_price {
+                println!("Heads up -- Quote ${} meets buy threshold ${}!", price, min_price);
+                send_discord_message(&price, &min_price).await?;
+            }
+        },
+        Err(_) => println!("No buy price set... Skipping notification."),
+    };
+
+    Ok(())
+}
+
+async fn get_bitcoin_quote() -> Result<Data> {
     let api_key = env::var("API_KEY")?;
     let api_url = env::var("API_URL")?;
 
@@ -118,40 +152,29 @@ async fn fetch_and_store_latest_quote() -> Result<()> {
     let formatted_price = (data.bitcoin.quote.usd.price * 100.0).round() / 100.0;
     data.bitcoin.quote.usd.price = formatted_price;
 
-    let conn = Connection::open("btc_tracker.db")?;
-    database::create_database(&conn)?;
-    let currency_id = database::insert_currency(&conn, &data.bitcoin)?;
-    database::insert_quote(&conn, currency_id, &data.bitcoin.quote.usd)?;
+    Ok(data)
+}
 
-    println!("{}", "Success! A new BTC quote has been saved to the database");
+async fn send_discord_message(price: &f64, price_threshold: &str) -> Result<()> {
+    let discord_url = env::var("DISCORD_URL")?;
+    let discord_client = reqwest::Client::new();
 
-    match env::var("MINIMUM_BUY_PRICE") {
-        Ok(min_price) => {
-            if formatted_price <= min_price.parse().unwrap() {
-                println!("Heads up -- Quote ${} meets buy threshold ${}!", formatted_price, min_price);
-                let discord_url = env::var("DISCORD_URL")?;
-                let discord_client = reqwest::Client::new();
-        
-                let payload = json!({
-                    "content": format!(
-                        "BTC quote **${}** meets your buy threshold of **${} USD**.\n_Pull the trigger!_",
-                        formatted_price, min_price
-                    )
-                });
-        
-                let response = discord_client.post(&discord_url)
-                    .json(&payload)
-                    .send()
-                    .await;
-        
-                match response {
-                    Ok(_) => println!("Discord message sent!"),
-                    Err(err) => println!("Error: {}", err),
-                }
-            }
-        },
-        Err(_) => println!("No buy price set... Skipping notification."),
-    };
+    let payload = json!({
+        "content": format!(
+            "BTC quote **${}** meets your buy threshold of **${} USD**.\n_Pull the trigger!_",
+            &price, &price_threshold
+        )
+    });
+
+    let response = discord_client.post(&discord_url)
+        .json(&payload)
+        .send()
+        .await;
+
+    match response {
+        Ok(_) => println!("Discord message sent!"),
+        Err(err) => println!("Error: {}", err),
+    }
 
     Ok(())
 }
