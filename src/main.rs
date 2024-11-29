@@ -6,6 +6,7 @@ use reqwest::header::{HeaderMap, HeaderValue, InvalidHeaderValue};
 use reqwest::Client;
 use rusqlite::Connection;
 use serde::Deserialize;
+use serde_json::json;
 
 use tokio::time::{interval, Duration};
 use tokio::signal;
@@ -55,6 +56,8 @@ async fn main() -> Result<()> {
         formatted_time
     );
     println!("\nPlease review the README.md to learn how to access the database");
+
+    // TODO: add command line option to control notification logic (email instead of discord etc.)
 
     let (tx, mut rx) = watch::channel(());
     let is_running = Arc::new(AtomicBool::new(true));
@@ -126,8 +129,11 @@ async fn fetch_and_store_latest_quote() -> Result<()> {
     let body = res.text().await?;
     
     let api_response: ApiResponse = serde_json::from_str(&body)?;
-    let data = api_response.data;
+    let mut data = api_response.data;
     println!("Found new BTC quote. Saving to database...");
+
+    let formatted_price = (data.bitcoin.quote.usd.price * 100.0).round() / 100.0;
+    data.bitcoin.quote.usd.price = formatted_price;
 
     let conn = Connection::open("btc_tracker.db")?;
     database::create_database(&conn)?;
@@ -135,6 +141,34 @@ async fn fetch_and_store_latest_quote() -> Result<()> {
     database::insert_quote(&conn, currency_id, &data.bitcoin.quote.usd)?;
 
     println!("{}", "Success! A new BTC quote has been saved to the database");
+
+    match env::var("MINIMUM_BUY_PRICE") {
+        Ok(min_price) => {
+            if formatted_price <= min_price.parse().unwrap() {
+                println!("Heads up -- Quote ${} meets buy threshold ${}!", formatted_price, min_price);
+                let discord_url = env::var("DISCORD_URL")?;
+                let discord_client = reqwest::Client::new();
+        
+                let payload = json!({
+                    "content": format!(
+                        "BTC quote **${}** meets your buy threshold of **${} USD**.\nPull the trigger!",
+                        formatted_price, min_price
+                    )
+                });
+        
+                let response = discord_client.post(&discord_url)
+                    .json(&payload)
+                    .send()
+                    .await;
+        
+                match response {
+                    Ok(_) => println!("Discord message sent!"),
+                    Err(err) => println!("Error: {}", err),
+                }
+            }
+        },
+        Err(_) => println!("No buy price set... Skipping notification."),
+    };
 
     Ok(())
 }
