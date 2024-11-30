@@ -12,3 +12,7 @@ serde_json = "1.0"
 tokio = { version = "1.41.1", features = ["full"] }
 rusqlite = { version = "0.32.0", features = ["bundled"] }
 colored = "2.1.0"
+openssl = { version = "0.10", features = ["vendored"] }
+
+[target.armv7-unknown-linux-gnueabihf]
+linker = "armv7-unknown-linux-gnueabihf"
