@@ -94,6 +94,38 @@ Once the project is run, the SQLite database will be created and populated with 
 
 You can use graphical tools like DB Browser for SQLite to open and inspect the database file. These tools provide a user-friendly interface to view and manipulate the database contents.
 
+### Compile the project for a Raspberry Pi
+
+As a fun challenge, I wanted to run this project on an old Raspberry Pi 4 I had lying around.
+
+Here are the steps I used
+
+1. Install the Cross-Compilation Toolchain You'll need a cross-compilation toolchain to build for the Raspberry Pi:
+
+```bash
+rustup target add armv7-unknown-linux-gnueabihf
+```
+
+2. Compile Program for the target arch:
+
+```bash
+cross build --release --target armv7-unknown-linux-gnueabihf --package btc_tracker
+```
+
+3. Transfer to the Raspberry Pi
+
+```bash
+scp target/armv7-unknown-linux-gnueabihf/release/btc_tracker pi@<raspberry-pi-ip>:/home/pi/
+```
+
+4. Connect to Raspberry Pi via SSH and run program
+
+```bash
+ssh pi@<raspberry-pi-ip>
+API_KEY=<add_your_key> API_URL=<add_quote_url> DISCORD_URL=<add_discord_webhook_url> MINIMUM_BUY_PRICE=<set_notify_price> ./btc_tracker
+```
+
+
 ## References
 
 - [CoinMarketCap API docs](https://coinmarketcap.com/api/documentation/v1/#operation/getV2CryptocurrencyOhlcvLatest)
